@@ -23,7 +23,6 @@ get_positional_options() {
 
     po::positional_options_description desc;
     desc.add("file", 1);
-
     return desc;
 }
 
