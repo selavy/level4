@@ -4,6 +4,7 @@
 #include <vector>
 #include <cstring>
 #include <cassert>
+#include <limits>
 #include <boost/program_options.hpp>
 #include "rapidxml.hpp"
 #include "command_line.h"
@@ -179,7 +180,7 @@ int main(int argc, char **argv) {
                     assert(0);
                 }
             }
-            cout << line << endl;
+            // cout << line << endl;
             lines.push_back(std::move(line));
         } else if (node->name() == ARC) {
             Arc arc;
@@ -202,13 +203,78 @@ int main(int argc, char **argv) {
                     assert(0);
                 }
             }
-            cout << arc << endl;
+            // cout << arc << endl;
             arcs.push_back(std::move(arc));
         } else {
             cerr << "Unknown element: " << node->name() << endl;
             ::exit(1);
         }
     }
+
+    double max_x = std::numeric_limits<double>::min();
+    double max_y = std::numeric_limits<double>::min();
+    double min_x = std::numeric_limits<double>::max();
+    double min_y = std::numeric_limits<double>::max();
+
+    for (const auto& line: lines) {
+        if (line.x_start < min_x) {
+            min_x = line.x_start;
+        } else if (line.x_start > max_x) {
+            max_x = line.x_start;
+        }
+
+        if (line.x_end < min_x) {
+            min_x = line.x_end;
+        } else if (line.x_end > max_x) {
+            max_x = line.x_end;
+        }
+
+        if (line.y_start < min_y) {
+            min_y = line.y_start;
+        } else if (line.y_start > max_y) {
+            max_y = line.y_start;
+        }
+
+        if (line.y_end < min_y) {
+            min_y = line.y_end;
+        } else if (line.y_end > max_y) {
+            max_y = line.y_end;
+        }
+
+    }
+    const double SQRT2 = sqrt(2.0);
+    for (const auto& arc: arcs) {
+        if (arc.x_center < min_x) {
+            min_x = arc.x_center;
+        } else if (arc.x_center > max_x) {
+            max_x = arc.x_center;
+        }
+
+        if (arc.y_center < min_y) {
+            min_y = arc.y_center;
+        } else if (arc.y_center > max_y) {
+            max_y = arc.y_center;
+        }
+
+        const double r = arc.radius / SQRT2;
+        if (arc.x_center + r > max_x) {
+            max_x = arc.x_center + r;
+        }
+        if (arc.y_center + r > max_y) {
+            max_y = arc.y_center + r;
+        }
+        if (arc.x_center - r < min_x) {
+            min_x = arc.x_center - r;
+        }
+        if (arc.y_center -r < min_y) {
+            min_y = arc.y_center - r;
+        }
+    }
+
+    cout << "Min X: " << min_x << endl;
+    cout << "Max X: " << max_x << endl;
+    cout << "Min Y: " << min_y << endl;
+    cout << "Max Y: " << max_y << endl;
 
     return 0;
 }
