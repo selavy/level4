@@ -2,17 +2,52 @@
 #include <string>
 #include <fstream>
 #include <vector>
+#include <cstring>
+#include <cassert>
 #include <boost/program_options.hpp>
 #include "rapidxml.hpp"
 #include "command_line.h"
 
-enum Color {
+enum class Color {
     Blue,
     Green,
     Red,
     Yellow,
     White
 };
+
+Color translate_color(const char* val) {
+    if (strncmp(val, "yellow", strlen("yellow")) == 0) {
+        return Color::Yellow;
+    } else if (strncmp(val, "green", strlen("green")) == 0) {
+        return Color::Green;
+    } else if (strncmp(val, "red", strlen("red")) == 0) {
+        return Color::Red;
+    } else if (strncmp(val, "white", strlen("white")) == 0) {
+        return Color::White;
+    } else if (strncmp(val, "blue", strlen("blue")) == 0) {
+        return Color::Blue;
+    } else {
+        assert(0); // should not get here
+        return Color::White;
+    }
+}
+
+std::string color_to_string(Color color) {
+    switch (color) {
+    case Color::Blue:
+        return "blue";
+    case Color::Green:
+        return "green";
+    case Color::Red:
+        return "red";
+    case Color::Yellow:
+        return "yellow";
+    case Color::White:
+    default: // not sure why g++ can't tell that there are no other exit points
+        return "white";
+    }
+}
 
 struct Line {
     Line()
@@ -37,9 +72,19 @@ struct Line {
     double y_end;
     Color color;
 };
+std::ostream& operator<<(std::ostream& os, const Line& line) {
+    os << "Line("
+       << line.x_start << ", "
+       << line.x_end << ", "
+       << line.y_start << ", "
+       << line.y_end << ", "
+       << color_to_string(line.color)
+       << ")";
+    return os;
+}
 
-struct Circle {
-    Circle()
+struct Arc {
+    Arc()
         : x_center(0.0)
         , y_center(0.0)
         , radius(0.0)
@@ -48,7 +93,7 @@ struct Circle {
         , color(Color::White)
         {}
 
-    Circle(double x, double y, double r, double s, double e, Color c=Color::White)
+    Arc(double x, double y, double r, double s, double e, Color c=Color::White)
         : x_center(x)
         , y_center(y)
         , radius(r)
@@ -64,6 +109,17 @@ struct Circle {
     double arc_extend;
     Color color;
 };
+std::ostream& operator<<(std::ostream& os, const Arc& arc) {
+    os << "Arc("
+       << arc.x_center << ", "
+       << arc.y_center << ", "
+       << arc.radius << ", "
+       << arc.arc_start << ", "
+       << arc.arc_extend << ", "
+       << color_to_string(arc.color)
+       << ")";
+    return os;
+}
 
 int main(int argc, char **argv) {
     using namespace std;
@@ -98,19 +154,56 @@ int main(int argc, char **argv) {
     cout << "Name of first node is: " << doc.first_node()->name() << endl;
     xml::xml_node<> *root = doc.first_node();
 
+    vector<Line> lines;
+    vector<Arc> arcs;
+    
     const string LINE = "Line";
     const string ARC = "Arc";
     for (xml::xml_node<> *node = root->first_node(); node; node = node->next_sibling()) {
         if (node->name() == LINE) {
-            cout << "LINE" << endl;
+            Line line;
             for (xml::xml_node<> *child = node->first_node(); child; child = child->next_sibling()) {
-                cout << "\t" << child->name() << endl;
+                const string name = child->name();
+                if (name == "XStart") {
+                    line.x_start = stod(child->value());
+                } else if (name == "XEnd") {
+                    line.x_end = stod(child->value());
+                } else if (name == "YStart") {
+                    line.y_start = stod(child->value());
+                } else if (name == "YEnd") {
+                    line.y_end = stod(child->value());
+                } else if (name == "Color") {
+                    line.color = translate_color(child->value());
+                } else {
+                    cout << "Unknown line child: " << name << endl;
+                    assert(0);
+                }
             }
+            cout << line << endl;
+            lines.push_back(std::move(line));
         } else if (node->name() == ARC) {
-            cout << "ARC" << endl;
+            Arc arc;
             for (xml::xml_node<> *child = node->first_node(); child; child = child->next_sibling()) {
-                cout << "\t" << child->name() << endl;
-            }            
+                const string name = child->name();
+                if (name == "XCenter") {
+                    arc.x_center = stod(child->value());
+                } else if (name == "YCenter") {
+                    arc.y_center = stod(child->value());
+                } else if (name == "Radius") {
+                    arc.radius = stod(child->value());
+                } else if (name == "ArcStart") {
+                    arc.arc_start = stod(child->value());
+                } else if (name == "ArcExtend") {
+                    arc.arc_extend = stod(child->value());
+                } else if (name == "Color") {
+                    arc.color = translate_color(child->value());
+                } else {
+                    cout << "Unknown arc child: " << name << endl;
+                    assert(0);
+                }
+            }
+            cout << arc << endl;
+            arcs.push_back(std::move(arc));
         } else {
             cerr << "Unknown element: " << node->name() << endl;
             ::exit(1);
