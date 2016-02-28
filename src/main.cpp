@@ -139,6 +139,23 @@ std::ostream& operator<<(std::ostream& os, const Arc& arc) {
     return os;
 }
 
+void drawline(cv::Mat& image, const size_t HEIGHT, const Line& line) {
+    cv::Point2f start(line.x_start, HEIGHT - line.y_start);
+    cv::Point2f end(line.x_end, HEIGHT - line.y_end);
+    cv::line(image, start, end, color_to_scalar(line.color));
+}
+void drawarc(cv::Mat& image, const size_t HEIGHT, const Arc& arc) {
+    cv::Point2f center(arc.x_center, HEIGHT - arc.y_center);
+    cv::Size axes(arc.radius, arc.radius);
+    cv::ellipse(image,
+                center,
+                axes,
+                0,
+                360. - arc.arc_start,
+                360. - (arc.arc_start + arc.arc_extend),
+                color_to_scalar(arc.color));    
+}
+
 int main(int argc, char **argv) {
     using namespace std;
     namespace xml = rapidxml;
@@ -229,46 +246,18 @@ int main(int argc, char **argv) {
     const size_t WIDTH = 1000;
     const size_t HEIGHT = 1000;
     cv::Mat image(WIDTH, HEIGHT, CV_8UC3, cv::Scalar(0));
-
-    // cv::Point2f start(100, HEIGHT-200);
-    // cv::Point2f end(500, HEIGHT-800);
-    // cv::line(image, start, end, color_to_scalar(Color::Red));
-
-    // Arc arc(600, 600, 200, 10, 80, Color::Blue);
-    // cv::Point2f center(arc.x_center, HEIGHT-arc.y_center);
-    // cv::Size axes(arc.radius, arc.radius);
-    // cv::ellipse(image,
-    //             center,
-    //             axes,
-    //             0,
-    //             arc.arc_start,
-    //             arc.arc_start + arc.arc_extend - 180.,
-    //             color_to_scalar(arc.color));
-    
     
     for (const auto& line: lines) {
-        // if (line.color != Color::Blue) continue;
-        // cout << line << endl;
-        cv::Point2f start(line.x_start, HEIGHT - line.y_start);
-        cv::Point2f end(line.x_end, HEIGHT - line.y_end);
-        cv::line(image, start, end, color_to_scalar(line.color));
+        drawline(image, HEIGHT, line);
     }
-    for (const auto& arc: arcs) {
-        // if (arc.color != Color::Blue) continue;
-        // cout << arc << endl;
-        cv::Point2f center(arc.x_center, HEIGHT - arc.y_center);
-        cv::Size axes(arc.radius, arc.radius);
-        cv::ellipse(image,
-                    center,
-                    axes,
-                    90,
-                    arc.arc_start,
-                    360. - arc.arc_start + arc.arc_extend,
-                    color_to_scalar(arc.color));
+    for (auto& arc: arcs) {
+        drawarc(image, HEIGHT, arc);
     }
     
     cv::imshow("Image", image);
-    cv::waitKey(0);
+    // while (1) {
+        cv::waitKey(0);
+    // }
     
     return 0;
 }
