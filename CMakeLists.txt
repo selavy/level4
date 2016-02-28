@@ -8,6 +8,9 @@ set(BOOST_ROOT $ENV{BOOST_DIR})
 find_package(Boost 1.55.0 REQUIRED COMPONENTS program_options)
 include_directories(${Boost_INCLUDE_DIRS})
 
+find_package(OpenCV REQUIRED)
+include_directories(${OpenCV_INCLUDE_DIRS})
+
 add_compile_options("--std=c++11")
 add_compile_options("-Wall")
 add_compile_options("-Werror")

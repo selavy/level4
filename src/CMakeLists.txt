@@ -7,3 +7,4 @@ add_executable(
   )
 
 target_link_libraries(level4 ${Boost_LIBRARIES})
+target_link_libraries(level4 ${OpenCV_LIBS})

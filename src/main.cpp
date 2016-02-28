@@ -8,6 +8,7 @@
 #include <boost/program_options.hpp>
 #include "rapidxml.hpp"
 #include "command_line.h"
+#include <opencv2/opencv.hpp>
 
 enum class Color {
     Blue,
@@ -211,70 +212,83 @@ int main(int argc, char **argv) {
         }
     }
 
-    double max_x = std::numeric_limits<double>::min();
-    double max_y = std::numeric_limits<double>::min();
-    double min_x = std::numeric_limits<double>::max();
-    double min_y = std::numeric_limits<double>::max();
+    // double max_x = std::numeric_limits<double>::min();
+    // double max_y = std::numeric_limits<double>::min();
+    // double min_x = std::numeric_limits<double>::max();
+    // double min_y = std::numeric_limits<double>::max();
 
-    for (const auto& line: lines) {
-        if (line.x_start < min_x) {
-            min_x = line.x_start;
-        } else if (line.x_start > max_x) {
-            max_x = line.x_start;
-        }
+    // for (const auto& line: lines) {
+    //     if (line.x_start < min_x) {
+    //         min_x = line.x_start;
+    //     } else if (line.x_start > max_x) {
+    //         max_x = line.x_start;
+    //     }
 
-        if (line.x_end < min_x) {
-            min_x = line.x_end;
-        } else if (line.x_end > max_x) {
-            max_x = line.x_end;
-        }
+    //     if (line.x_end < min_x) {
+    //         min_x = line.x_end;
+    //     } else if (line.x_end > max_x) {
+    //         max_x = line.x_end;
+    //     }
 
-        if (line.y_start < min_y) {
-            min_y = line.y_start;
-        } else if (line.y_start > max_y) {
-            max_y = line.y_start;
-        }
+    //     if (line.y_start < min_y) {
+    //         min_y = line.y_start;
+    //     } else if (line.y_start > max_y) {
+    //         max_y = line.y_start;
+    //     }
 
-        if (line.y_end < min_y) {
-            min_y = line.y_end;
-        } else if (line.y_end > max_y) {
-            max_y = line.y_end;
-        }
+    //     if (line.y_end < min_y) {
+    //         min_y = line.y_end;
+    //     } else if (line.y_end > max_y) {
+    //         max_y = line.y_end;
+    //     }
 
-    }
-    const double SQRT2 = sqrt(2.0);
-    for (const auto& arc: arcs) {
-        if (arc.x_center < min_x) {
-            min_x = arc.x_center;
-        } else if (arc.x_center > max_x) {
-            max_x = arc.x_center;
-        }
+    // }
+    // const double SQRT2 = sqrt(2.0);
+    // for (const auto& arc: arcs) {
+    //     if (arc.x_center < min_x) {
+    //         min_x = arc.x_center;
+    //     } else if (arc.x_center > max_x) {
+    //         max_x = arc.x_center;
+    //     }
 
-        if (arc.y_center < min_y) {
-            min_y = arc.y_center;
-        } else if (arc.y_center > max_y) {
-            max_y = arc.y_center;
-        }
+    //     if (arc.y_center < min_y) {
+    //         min_y = arc.y_center;
+    //     } else if (arc.y_center > max_y) {
+    //         max_y = arc.y_center;
+    //     }
 
-        const double r = arc.radius / SQRT2;
-        if (arc.x_center + r > max_x) {
-            max_x = arc.x_center + r;
-        }
-        if (arc.y_center + r > max_y) {
-            max_y = arc.y_center + r;
-        }
-        if (arc.x_center - r < min_x) {
-            min_x = arc.x_center - r;
-        }
-        if (arc.y_center -r < min_y) {
-            min_y = arc.y_center - r;
-        }
-    }
+    //     const double r = arc.radius / SQRT2;
+    //     if (arc.x_center + r > max_x) {
+    //         max_x = arc.x_center + r;
+    //     }
+    //     if (arc.y_center + r > max_y) {
+    //         max_y = arc.y_center + r;
+    //     }
+    //     if (arc.x_center - r < min_x) {
+    //         min_x = arc.x_center - r;
+    //     }
+    //     if (arc.y_center -r < min_y) {
+    //         min_y = arc.y_center - r;
+    //     }
+    // }
 
-    cout << "Min X: " << min_x << endl;
-    cout << "Max X: " << max_x << endl;
-    cout << "Min Y: " << min_y << endl;
-    cout << "Max Y: " << max_y << endl;
+    // cout << "Min X: " << min_x << endl;
+    // cout << "Max X: " << max_x << endl;
+    // cout << "Min Y: " << min_y << endl;
+    // cout << "Max Y: " << max_y << endl;
 
+    cv::Mat image(200, 200, CV_8UC3, cv::Scalar(0));
+    cv::RotatedRect rect(cv::Point2f(100, 100), cv::Size2f(100, 50), 30);
+    cv::Point2f vertices[4];
+    rect.points(vertices);
+    for (int i = 0; i < 4; ++i)
+        cv::line(image, vertices[i], vertices[(i+1) % 4], cv::Scalar(0, 255, 0));
+    cv::Rect brect = rect.boundingRect();
+    cv::rectangle(image, brect, cv::Scalar(255, 0, 0));
+    cv::imshow("rectanges", image);
+    // cv::namedWindow("Image", cv::WINDOW_AUTOSIZE);
+    // cv::imshow("Image", image);
+    cv::waitKey(0);
+    
     return 0;
 }
