@@ -35,6 +35,22 @@ Color translate_color(const char* val) {
     }
 }
 
+cv::Scalar color_to_scalar(Color color) {
+    switch (color) {
+    case Color::Blue:
+        return CV_RGB(0, 0, 255);
+    case Color::Green:
+        return CV_RGB(0, 204, 0);
+    case Color::Red:
+        return CV_RGB(255, 0, 0);
+    case Color::Yellow:
+        return CV_RGB(204, 204, 0);
+    case Color::White:
+    default:
+        return CV_RGB(255, 255, 255);
+    }
+}
+
 std::string color_to_string(Color color) {
     switch (color) {
     case Color::Blue:
@@ -181,7 +197,6 @@ int main(int argc, char **argv) {
                     assert(0);
                 }
             }
-            // cout << line << endl;
             lines.push_back(std::move(line));
         } else if (node->name() == ARC) {
             Arc arc;
@@ -204,7 +219,6 @@ int main(int argc, char **argv) {
                     assert(0);
                 }
             }
-            // cout << arc << endl;
             arcs.push_back(std::move(arc));
         } else {
             cerr << "Unknown element: " << node->name() << endl;
@@ -212,82 +226,48 @@ int main(int argc, char **argv) {
         }
     }
 
-    // double max_x = std::numeric_limits<double>::min();
-    // double max_y = std::numeric_limits<double>::min();
-    // double min_x = std::numeric_limits<double>::max();
-    // double min_y = std::numeric_limits<double>::max();
+    const size_t WIDTH = 1000;
+    const size_t HEIGHT = 1000;
+    cv::Mat image(WIDTH, HEIGHT, CV_8UC3, cv::Scalar(0));
 
-    // for (const auto& line: lines) {
-    //     if (line.x_start < min_x) {
-    //         min_x = line.x_start;
-    //     } else if (line.x_start > max_x) {
-    //         max_x = line.x_start;
-    //     }
+    // cv::Point2f start(100, HEIGHT-200);
+    // cv::Point2f end(500, HEIGHT-800);
+    // cv::line(image, start, end, color_to_scalar(Color::Red));
 
-    //     if (line.x_end < min_x) {
-    //         min_x = line.x_end;
-    //     } else if (line.x_end > max_x) {
-    //         max_x = line.x_end;
-    //     }
-
-    //     if (line.y_start < min_y) {
-    //         min_y = line.y_start;
-    //     } else if (line.y_start > max_y) {
-    //         max_y = line.y_start;
-    //     }
-
-    //     if (line.y_end < min_y) {
-    //         min_y = line.y_end;
-    //     } else if (line.y_end > max_y) {
-    //         max_y = line.y_end;
-    //     }
-
-    // }
-    // const double SQRT2 = sqrt(2.0);
-    // for (const auto& arc: arcs) {
-    //     if (arc.x_center < min_x) {
-    //         min_x = arc.x_center;
-    //     } else if (arc.x_center > max_x) {
-    //         max_x = arc.x_center;
-    //     }
-
-    //     if (arc.y_center < min_y) {
-    //         min_y = arc.y_center;
-    //     } else if (arc.y_center > max_y) {
-    //         max_y = arc.y_center;
-    //     }
-
-    //     const double r = arc.radius / SQRT2;
-    //     if (arc.x_center + r > max_x) {
-    //         max_x = arc.x_center + r;
-    //     }
-    //     if (arc.y_center + r > max_y) {
-    //         max_y = arc.y_center + r;
-    //     }
-    //     if (arc.x_center - r < min_x) {
-    //         min_x = arc.x_center - r;
-    //     }
-    //     if (arc.y_center -r < min_y) {
-    //         min_y = arc.y_center - r;
-    //     }
-    // }
-
-    // cout << "Min X: " << min_x << endl;
-    // cout << "Max X: " << max_x << endl;
-    // cout << "Min Y: " << min_y << endl;
-    // cout << "Max Y: " << max_y << endl;
-
-    cv::Mat image(200, 200, CV_8UC3, cv::Scalar(0));
-    cv::RotatedRect rect(cv::Point2f(100, 100), cv::Size2f(100, 50), 30);
-    cv::Point2f vertices[4];
-    rect.points(vertices);
-    for (int i = 0; i < 4; ++i)
-        cv::line(image, vertices[i], vertices[(i+1) % 4], cv::Scalar(0, 255, 0));
-    cv::Rect brect = rect.boundingRect();
-    cv::rectangle(image, brect, cv::Scalar(255, 0, 0));
-    cv::imshow("rectanges", image);
-    // cv::namedWindow("Image", cv::WINDOW_AUTOSIZE);
-    // cv::imshow("Image", image);
+    // Arc arc(600, 600, 200, 10, 80, Color::Blue);
+    // cv::Point2f center(arc.x_center, HEIGHT-arc.y_center);
+    // cv::Size axes(arc.radius, arc.radius);
+    // cv::ellipse(image,
+    //             center,
+    //             axes,
+    //             0,
+    //             arc.arc_start,
+    //             arc.arc_start + arc.arc_extend - 180.,
+    //             color_to_scalar(arc.color));
+    
+    
+    for (const auto& line: lines) {
+        // if (line.color != Color::Blue) continue;
+        // cout << line << endl;
+        cv::Point2f start(line.x_start, HEIGHT - line.y_start);
+        cv::Point2f end(line.x_end, HEIGHT - line.y_end);
+        cv::line(image, start, end, color_to_scalar(line.color));
+    }
+    for (const auto& arc: arcs) {
+        // if (arc.color != Color::Blue) continue;
+        // cout << arc << endl;
+        cv::Point2f center(arc.x_center, HEIGHT - arc.y_center);
+        cv::Size axes(arc.radius, arc.radius);
+        cv::ellipse(image,
+                    center,
+                    axes,
+                    90,
+                    arc.arc_start,
+                    360. - arc.arc_start + arc.arc_extend,
+                    color_to_scalar(arc.color));
+    }
+    
+    cv::imshow("Image", image);
     cv::waitKey(0);
     
     return 0;
